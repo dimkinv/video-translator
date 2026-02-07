@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { createLogger } from "./utils/logger";
+import { loadEnv } from "./utils/env";
 import { createWorkspace, readJsonIfExists, writeJson } from "./cache/store";
 import { runProbe } from "./pipeline/stage0_probe";
 import { runExtract } from "./pipeline/stage1_extract";
@@ -90,6 +91,7 @@ const parseArgs = (argv: string[]): { input: string; output: string; settings: P
 };
 
 const main = async () => {
+  loadEnv();
   const { input, output, settings } = parseArgs(process.argv.slice(2));
   if (!fs.existsSync(input)) {
     throw new Error(`Input file not found: ${input}`);

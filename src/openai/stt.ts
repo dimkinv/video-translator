@@ -1,10 +1,9 @@
 import fs from "fs";
 import { Segment } from "../types";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 export const transcribe = async (audioPath: string): Promise<Segment[]> => {
-  if (!OPENAI_API_KEY) {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
     throw new Error("OPENAI_API_KEY is not set");
   }
   const form = new FormData();
@@ -15,7 +14,7 @@ export const transcribe = async (audioPath: string): Promise<Segment[]> => {
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${openAiApiKey}`,
     },
     body: form,
   });
