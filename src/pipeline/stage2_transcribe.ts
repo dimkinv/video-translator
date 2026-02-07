@@ -36,17 +36,19 @@ export const runTranscribe = async (
   maxDuration: number,
   logger: Logger
 ): Promise<SegmentsEn> => {
-  logger.info("Transcribing audio");
+  logger.info(`Transcribing audio from ${audioPath}`);
   const segments = await transcribe(audioPath);
   const normalized = normalizeSegments(segments, maxDuration);
   if (normalized.length === 0) {
     throw new Error("No speech segments detected");
   }
+  logger.info(`Detected ${segments.length} raw segments, normalized to ${normalized.length}`);
   const payload: SegmentsEn = {
     video: inputVideo,
     audio: audioPath,
     segments: normalized,
   };
   writeJson(path.join(workdir, "segments.en.json"), payload);
+  logger.info(`Saved segments.en.json with ${normalized.length} segments`);
   return payload;
 };

@@ -33,8 +33,10 @@ export const runDucking = async (
     end: segment.end + padEnd,
   }));
   const merged = mergeWindows(windows, 0.15);
+  logger.info(`Ducking windows: ${merged.windows.length}`);
   writeJson(path.join(workdir, "windows.json"), merged);
   const output = path.join(workdir, "audio_ducked.wav");
   await applyDucking(audioSrc, output, merged.windows, duckDb);
+  logger.info(`Ducked audio written to ${output}`);
   return output;
 };

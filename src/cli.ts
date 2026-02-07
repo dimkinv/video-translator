@@ -100,6 +100,14 @@ const main = async () => {
   const workspace = createWorkspace(input, settings, settings.workdir);
   const logFile = path.join(workspace.root, "run.log");
   const logger = createLogger(logFile);
+  logger.info("Starting pipeline");
+  logger.info(`Input: ${input}`);
+  logger.info(`Output: ${output}`);
+  logger.info(`Workdir: ${workspace.root}`);
+  logger.info(`Mode: ${settings.mode}`);
+  logger.info(
+    `Settings: duckDb=${settings.duckDb}, duckAttack=${settings.duckAttack}, duckRelease=${settings.duckRelease}, padStart=${settings.padStart}, padEnd=${settings.padEnd}, segmentMaxSec=${settings.segmentMaxSec}, ttsVoice=${settings.ttsVoice}, rateLimit=${settings.rateLimit}, resume=${settings.resume}, maxStretch=${settings.maxStretch}`
+  );
 
   const report: RunReport = {
     input,
@@ -114,17 +122,41 @@ const main = async () => {
 
   const { sttPath, srcPath } = await runExtract(input, workspace.root, logger);
 
-  const segmentsEn =
-    (settings.resume && readJsonIfExists<SegmentsEn>(path.join(workspace.root, "segments.en.json"))) ??
-    (await runTranscribe(input, sttPath, workspace.root, settings.segmentMaxSec, logger));
+  let segmentsEn: SegmentsEn | undefined;
+  if (settings.resume) {
+    const cached = readJsonIfExists<SegmentsEn>(path.join(workspace.root, "segments.en.json"));
+    if (cached) {
+      logger.info("Resume enabled: using cached segments.en.json");
+      segmentsEn = cached;
+    }
+  }
+  if (!segmentsEn) {
+    segmentsEn = await runTranscribe(input, sttPath, workspace.root, settings.segmentMaxSec, logger);
+  }
 
-  const segmentsRu =
-    (settings.resume && readJsonIfExists<SegmentsRu>(path.join(workspace.root, "segments.ru.json"))) ??
-    (await runTranslate(segmentsEn, workspace.root, logger));
+  let segmentsRu: SegmentsRu | undefined;
+  if (settings.resume) {
+    const cached = readJsonIfExists<SegmentsRu>(path.join(workspace.root, "segments.ru.json"));
+    if (cached) {
+      logger.info("Resume enabled: using cached segments.ru.json");
+      segmentsRu = cached;
+    }
+  }
+  if (!segmentsRu) {
+    segmentsRu = await runTranslate(segmentsEn, workspace.root, logger);
+  }
 
-  const ttsManifest =
-    (settings.resume && readJsonIfExists<TtsManifest>(path.join(workspace.root, "tts.manifest.json"))) ??
-    (await runTts(segmentsRu, workspace.root, settings.ttsVoice, settings.rateLimit, logger));
+  let ttsManifest: TtsManifest | undefined;
+  if (settings.resume) {
+    const cached = readJsonIfExists<TtsManifest>(path.join(workspace.root, "tts.manifest.json"));
+    if (cached) {
+      logger.info("Resume enabled: using cached tts.manifest.json");
+      ttsManifest = cached;
+    }
+  }
+  if (!ttsManifest) {
+    ttsManifest = await runTts(segmentsRu, workspace.root, settings.ttsVoice, settings.rateLimit, logger);
+  }
 
   const { voPath } = await runTimeline(segmentsEn, ttsManifest, workspace.root, logger);
 

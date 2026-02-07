@@ -13,7 +13,7 @@ export const runTts = async (
   rateLimit: number,
   logger: Logger
 ): Promise<TtsManifest> => {
-  logger.info("Generating TTS audio");
+  logger.info(`Generating TTS audio with voice "${voice}" for ${segmentsRu.segments.length} segments`);
   const ttsDir = path.join(workdir, "tts");
 
   const entries = await runLimited(
@@ -35,7 +35,10 @@ export const runTts = async (
     }
   );
 
+  const skipped = entries.filter((entry) => entry.skipped).length;
+  logger.info(`TTS complete: ${entries.length - skipped} succeeded, ${skipped} skipped`);
   const manifest: TtsManifest = { segments: entries };
   writeJson(path.join(workdir, "tts.manifest.json"), manifest);
+  logger.info("Saved tts.manifest.json");
   return manifest;
 };
