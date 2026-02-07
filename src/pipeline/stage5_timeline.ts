@@ -14,7 +14,7 @@ export const runTimeline = async (
   workdir: string,
   logger: Logger
 ): Promise<TimelineResult> => {
-  logger.info("Building VO timeline");
+  logger.info(`Building VO timeline from ${segmentsEn.segments.length} segments`);
   const timelineFiles: string[] = [];
   let cursor = 0;
 
@@ -37,8 +37,11 @@ export const runTimeline = async (
   const voPath = path.join(workdir, "vo.wav");
   if (timelineFiles.length === 0) {
     await createSilence(0.1, voPath);
+    logger.warn("No TTS clips found, generated short silence track");
     return { voPath };
   }
   await concatAudio(timelineFiles, voPath);
+  logger.info(`VO timeline assembled with ${timelineFiles.length} clips`);
+  logger.info(`VO track written to ${voPath}`);
   return { voPath };
 };
