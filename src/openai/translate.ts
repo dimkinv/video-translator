@@ -1,16 +1,15 @@
 import { SegmentTranslation } from "../types";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 export const translateSegments = async (segments: { id: string; text: string }[]): Promise<SegmentTranslation[]> => {
-  if (!OPENAI_API_KEY) {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  if (!openAiApiKey) {
     throw new Error("OPENAI_API_KEY is not set");
   }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      Authorization: `Bearer ${openAiApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
